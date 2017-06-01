@@ -1,0 +1,55 @@
+.model lion_Binary
+.inputs I1 I0
+.outputs O0
+.m 4
+.clock clk
+
+# st2 00
+# st1 01
+# st3 10
+# st0 11
+
+### transition section begin ###
+
+.names S1 S0 I1 I0 next_S1
+0001 1
+0111 1
+100- 1
+1111 1
+11-0 1
+
+.names S1 S0 I1 I0 next_S0
+0000 1
+010- 1
+0111 1
+1101 1
+1111 1
+11-0 1
+
+.latch next_S1 S1 re clk 0
+.latch next_S0 S0 re clk 0
+
+### transition section endin ###
+
+
+
+### output section begin ###
+
+.names S1 S0 I1 I0 next_O0
+0000 1
+0001 1
+001- 1
+010- 1
+0110 1
+100- 1
+1011 1
+
+.names a b c r
+101 1
+0-- 1
+-10 1
+
+
+.latch next_O0 O0 re clk 0
+
+### output section endin ###
