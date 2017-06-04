@@ -1,6 +1,7 @@
 package blif;
 
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -11,9 +12,9 @@ import java.util.List;
  *
  */
 public class BinFunction {
- private List<Cube> on = new ArrayList<Cube>();    public List<Cube> on () { return this.on; }
- private List<Cube> dc = new ArrayList<Cube>();    public List<Cube> dc () { return this.dc; }
- private int numInputs;    public int numInputs () { return this.numInputs; }
+ private final Set on;    public Set on () { return this.on; }
+ private final Set dc;    public Set dc () { return this.dc; }
+ public int numInputs () { return this.on.width; }
  private String[] names;    public String[] names () { return this.names; }
  // definition of two-bit representations
  public final static int INV = 0;
@@ -24,10 +25,27 @@ public class BinFunction {
  public final static int inverseZERO = 2;
  
  public BinFunction (int numInputs) {
-  this.numInputs = numInputs;
+  this.on = new Set(numInputs);
+  this.dc = new Set(numInputs);
   names = new String[numInputs+1]; 
  }
  
+ /**
+  * Computes the off-set from onset and dc-set (Extremely slow)
+  * @return
+  * @throws Exception
+  */
+ public List<Cube> computeOff () throws Exception {
+  List<Cube> onDc = new ArrayList<Cube>(); // onDc contains all implicants that are not in the offset. So not onDC is the offset, which has to be expanded to get a disjunctive form
+  onDc.addAll(this.on);
+  onDc.addAll(this.dc);
+  // ToDo: sort cube for reaching don't cares early and merging overlaps
+  Cube n;
+  n = new Cube(numInputs());
+  List<Cube> off = new ArrayList<Cube>();
+  multiply(0, n, onDc, off);
+  return off;
+ }
  /**
   * Computes recursively the disjunctive, expanded function of src' i.E. (ab'c + ac+ a'bc')' --> (a'+b+c') & (a'+c') & (a+b'+c) --> c'b' + c'a + c'a'b' + bc'a + ba'c + ba'c + a'c'b' 
   * Do first call with impl = 0, prod = DC DC DC..., dst = {}
@@ -48,7 +66,7 @@ public class BinFunction {
    dst.add(prod);
    return;
   }
-  for (int i = 0; i < numInputs; i++) {
+  for (int i = 0; i < numInputs(); i++) {
    Cube n = prod.clone(Cube.class);
    switch (src.get(impl).getVar(i)) {
     case inverseONE :
@@ -67,29 +85,13 @@ public class BinFunction {
   }
  }
  
- public List<Cube> computeOff () throws Exception {
-  List<Cube> onDc = new ArrayList<Cube>(); // onDc contains all implicants that are not in the offset. So not onDC is the offset, which has to be expanded to get a disjunctive form
-  onDc.addAll(this.on);
-  onDc.addAll(this.dc);
-  // ToDo: sort cube for reaching don't cares early and merging overlaps
-  Cube n;
-  n = new Cube(numInputs);
-  List<Cube> off = new ArrayList<Cube>();
-  multiply(0, n, onDc, off);
-  return off;
- }
- 
- 
- public String toString () {
-  return toString(on);
- }
- 
+ public String toString () { return toString(on); }
  public String toString (List<Cube> set) {
   String s = "";
   String v;
   for (int i = 0; i < set.size(); i++) {
    if (!s.equals("")) s += " + ";
-   for (int j = 0; j < numInputs; j++) {
+   for (int j = 0; j < numInputs(); j++) {
     if (names[j] != null) v = names[j];
     else v = ""+j;
     switch (((Cube)set.get(i)).getVar(j)) {
@@ -104,7 +106,7 @@ public class BinFunction {
     }
    }
   }
-  if (names[numInputs] != null) s = names[numInputs] + " = " + s;
+  if (names[numInputs()] != null) s = names[numInputs()] + " = " + s;
   return s;
  }
  
@@ -191,9 +193,39 @@ public class BinFunction {
    return clone(this.getClass());
   }
   
+  public boolean equals (Cube foreign) {
+   if (width != foreign.width) return false;
+   for (int i = 0; i < cube.length; i++) if (cube[i] != foreign.cube[i]) return false;
+   return true;
+  }
+  
+  /**
+   * @return
+   * returns the cardinality of the set M specified by this cube
+   */
+  public BigInteger cardinality () { // untested!
+   BigInteger two = new BigInteger("2");
+   BigInteger n = new BigInteger("1");
+   for (int i = 0; i < width / 32; i++) {
+    long p = cube[i];
+    for (int j = 0; j < 32; j++) {
+     if ((p & INV) == INV) return new BigInteger("0");
+     if ((p & DC) == DC) n = n.multiply(two);
+     p = p >>> 2;
+    }
+   }
+   long p = cube[cube.length-1];
+   for (int j = 0; j < width % 32; j++) {
+    if ((p & INV) == INV) return new BigInteger("0");
+    if ((p & DC) == DC) n = n.multiply(two);
+    p = p >>> 2;
+   }
+   return n;
+  }
+  
   /**
    * Or-combines with another cube.
-   * 
+   *
    * @param foreign
    *           The "other" cube.
    * @return The or-combined result of this and another cube.
@@ -227,7 +259,101 @@ public class BinFunction {
    for (int i = width; i < cube.length*32; i++) if (getVar(i) != DC) return false; // Unused variable > width is not don't care
    return true;
   }
-
-
  }
+
+
+  
+  
+  public static class Set extends ArrayList<Cube> {
+   private static final long serialVersionUID = -8446625631682699485L;
+   private final int width;    public int width () { return this.width; }
+   public Set (int width) {
+    super();
+    this.width = width;
+   }
+   
+   public boolean add(Cube c) {
+    if (c.width != this.width) return false;
+    return super.add(c);
+   }
+   
+   /**
+    * Checks, weather the given cube u is completely covered by this set.
+    * If u is element of this, the function checks, weather u is covered by this without u
+    * @param u
+    * @return
+    */
+   public boolean covers(final Cube u) { return covers(u, u); }
+   private boolean covers(final Cube u, final Cube ignore) {
+    int i = 0;
+    for (i = 0; i < this.size(); i++) {
+     Cube a = this.get(i);
+     if (a == ignore) continue; // this without u
+     a = u.and(a);
+     if (!a.isValid()) continue; // u has no intersection with cube[i]
+     if (a.equals(u)) return true; // u is completely covered by the existing cube[i]
+     for (int j = 0; j < u.width; j++) if (u.getVar(j) == DC && a.getVar(j) != DC) {
+      // split into smaller cubes and try again...
+      Cube c1 = u.clone();
+      Cube c2 = u.clone();
+      c1.setVar(j, ONE);
+      c2.setVar(j, ZERO);
+      return covers(c1, ignore) && covers(c2, ignore);
+     }
+    }
+    // u has no intersects with existing cubes
+    return false;
+   }
+  }
+  
+  
+  
+ /*
+ public static class IntersectFreeSet extends Set {
+  private static final long serialVersionUID = 8905066173022612097L;
+
+  public IntersectFreeSet(int width) { super(width); }
+  
+  /**
+   * Adds cube c intersect-free:
+   *  - Adds c, if c has no intersects with the existing cubes in the Set.
+   *  - Don't adds c, if c is completely covered by one existing cube.
+   *  - Splits up c into smaller cubes and tries to add them, if c has intersections with the existing cubes.
+   * @return
+   * Returns true, if something was added
+   
+  public boolean add(final Cube c) {
+   for (int i = 0; i < this.size(); i++) {
+    Cube a = c.and(this.get(i));
+    if (!a.isValid()) continue; // c has no intersection with cube[i]
+    if (a.equals(c)) return false; // c is completely covered by one existing cube[i]
+    for (int j = 0; j < c.width; j++) if (c.getVar(j) == DC && a.getVar(j) != DC) {
+     // split into smaller cubes and try again...
+     Cube c1 = c.clone();
+     Cube c2 = c.clone();
+     c1.setVar(j, ONE);
+     c2.setVar(j, ZERO);
+     return add(c1) | add(c2);
+    }
+   }
+   // c has no intersects with existing cubes
+   super.add(c);
+   return true;
+  }
+  
+  /**
+   * Checks, wheather the given cube u is completely covered by this set
+   * @param u
+   * @return
+   
+  public boolean covers(final Cube u) {
+   BigInteger cover_card = new BigInteger("0");
+   for (int i = 0; i < this.size(); i++) {
+    Cube a = u.and(this.get(i));
+    cover_card = cover_card.add(a.cardinality());
+   }
+   return cover_card.equals(u.cardinality());
+  }
+ }
+ */
 }

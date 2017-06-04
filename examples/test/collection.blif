@@ -1,2 +1,2 @@
-.subckt lin.rom
-#.subckt lion_Binary.blif
+#.subckt lin.rom
+.subckt lion_Binary.blif

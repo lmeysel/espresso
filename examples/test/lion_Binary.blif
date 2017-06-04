@@ -4,6 +4,11 @@
 .m 4
 .clock clk
 
+.names a b c d r
+11-- 1
+--11 1
+111- 1
+
 # st2 00
 # st1 01
 # st3 10

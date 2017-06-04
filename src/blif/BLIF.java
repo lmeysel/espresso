@@ -115,10 +115,14 @@ public class BLIF {
       case '0' :
        break;
       case '1' :
-       try { currentFunctions[i].on().add(new BinFunction.Cube(sp[0])); } catch (Exception e) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": "+e.getMessage()); break LINEREADER; }
+       try {
+        if (!currentFunctions[i].on().add(new BinFunction.Cube(sp[0]))) log.warning("Warning at line "+n+" of file "+file.getName()+": Could not add cube to on-set!");
+       } catch (Exception e) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": "+e.getMessage()); break LINEREADER; }
        break;
       case '-' :
-       try { currentFunctions[i].dc().add(new BinFunction.Cube(sp[0])); } catch (Exception e) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": "+e.getMessage()); break LINEREADER; }
+       try {
+        if (!currentFunctions[i].dc().add(new BinFunction.Cube(sp[0]))) log.warning("Warning at line "+n+" of file "+file.getName()+": Could not add cube to dc-set!");
+       } catch (Exception e) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": "+e.getMessage()); break LINEREADER; }
        break;
       default :
        log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": Illegal output variable value '"+sp[1].charAt(i)+"'!");

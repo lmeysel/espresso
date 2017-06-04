@@ -1,12 +1,11 @@
 package rs.espresso;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.logging.Logger;
 
 import blif.BinFunction;
 import blif.BinFunction.Cube;
+import blif.BinFunction.Set;
 
 /**
  * 
@@ -15,8 +14,8 @@ import blif.BinFunction.Cube;
  * @version 19.05.2017
  */
 public class Espresso {
-    private List<ExtCube> implicants = new ArrayList<ExtCube>();
-    private List<Cube> off = null;
+    private Set implicants = null;
+    private Set onDc = null;
     private BinFunction fkt = null;
 	private final Logger log;
 
@@ -30,19 +29,29 @@ public class Espresso {
     /**
      * Runs the espresso algorithm.
      */
-    public BinFunction run (BinFunction fkt) {
-     implicants.clear();
+    public void run (BinFunction fkt) {
      this.fkt = fkt;
      
-     log.info("Load function into Espresso (Compute offset)...");
-     try {
-      off = fkt.computeOff();
-      System.out.println("Offset:     "+fkt.toString(off));
-     } catch (Exception e) {
-      log.severe("Cannot compute Offset: "+e.getMessage());
-     }
+     log.info("Load function into Espresso...");
+     onDc = new Set(fkt.numInputs());
+     for (int i = 0; i < fkt.on().size(); i++) onDc.add(fkt.on().get(i));
+     for (int i = 0; i < fkt.dc().size(); i++) onDc.add(fkt.dc().get(i));
      
-     log.info("Expand...");
+     log.info("Expand on-set...");
+     for (int i = 0; i < fkt.on().size(); i++) fkt.on().set(i, maximumExpansion(fkt.on().get(i)));
+     
+     log.info("Remove unnecessary cubes...");
+     boolean b;
+     do {
+      b = false;
+      for (int i = 0; i < fkt.on().size(); i++) if (fkt.on().covers(fkt.on().get(i))) {
+       fkt.on().remove(i); // on-set without current cube still covers current cube!
+       b = true;
+       break;
+      }
+     } while (b);
+     
+     /*log.info("Expand...");
      ArrayList<ExtCube> cover = new ArrayList<ExtCube>();
      for (int i = 0; i < fkt.on().size(); i++) cover.add((ExtCube)fkt.on().get(i).clone(ExtCube.class));
      int counter = -1;
@@ -65,18 +74,18 @@ public class Espresso {
       cover.add(current);
      }
 
-     log.info("Reduce...");
+     log.info("Reduce...");*/
      
-     log.info("Create resulting function...");
-     BinFunction r = new BinFunction(fkt.numInputs());
-     for (int i = 0; i < implicants.size(); i++) r.on().add(implicants.get(i).clone(BinFunction.Cube.class));
+     log.info("Write result back into given function...");
+     fkt.dc().clear();
+     //fkt.on().clear();
+     //for (int i = 0; i < implicants.size(); i++) fkt.on().add(implicants.get(i));
 
      // free memory
-     off.clear();
-     off = null;
-     implicants.clear();
+     onDc.clear();
+     onDc = null;
+     //implicants.clear();
      this.fkt = null;
-     return r;
     }
 
 	private void weightAndSort(ArrayList<ExtCube> set) {
@@ -107,17 +116,20 @@ public class Espresso {
 		System.out.println();
 	}
 
-	private ExtCube maximumExpansion(ExtCube cube) {
-	/* for (int i = 0; i < cube.width; i++) if (cube.getVar(i) == BinFunction.ZERO) {
-	  cube.orVar(i, BinFunction.ONE);
-	  boolean b = false;
-	  for (int j = 0; j < fkt.on().size(); j++) if (fkt.on().get(j).andVar(n, v);)
-	 }*/
+    private Cube maximumExpansion(Cube c) {
+     for (int i = 0; i < c.width; i++) if (c.getVar(i) != BinFunction.DC) {
+      Cube n = c.clone();
+      n.setVar(i, BinFunction.DC);
+      if (onDc.covers(n)) c = n; 
+     }
+     return c;
+    }
+	/*private ExtCube maximumExpansion(ExtCube cube) {
 		boolean[] b = cube.getBits();
 		for (int i = 0; i < b.length; i++)
 			if (!b[i]) {
 			    ExtCube tmp = cube.expand(i);
-				Iterator<Cube> it2 = off.iterator();
+				Iterator<Cube> it2 = onDc.iterator();
 				while (it2.hasNext()) {
 				    Cube nxt = it2.next();
 					if (tmp.intersects(nxt)) {
@@ -130,7 +142,7 @@ public class Espresso {
 				}
 			}
 		return cube;
-	}
+	}*/
 	
 	
 	
