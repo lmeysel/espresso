@@ -1,7 +1,6 @@
 package blif;
 
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -86,26 +85,38 @@ public class BinFunction {
  }
  
  public String toString () { return toString(on); }
- public String toString (List<Cube> set) {
+ public String toString (Set set) {
   String s = "";
+  boolean inv = false;
+  boolean one = false;
   String v;
   for (int i = 0; i < set.size(); i++) {
    if (!s.equals("")) s += " + ";
+   int dcCnt = 0;
    for (int j = 0; j < numInputs(); j++) {
     if (names[j] != null) v = names[j];
     else v = ""+j;
     switch (((Cube)set.get(i)).getVar(j)) {
      case INV :
-      return "invalid";
+      s += v+"!";
+      inv = true;
+      break;
      case ONE :
       s += v+" ";
       break;
      case ZERO :
       s += v+"'";
       break;
+     case DC :
+      dcCnt++;
+      break;
     }
+    if (dcCnt == numInputs()) one = true;
    }
   }
+  if (inv) s = "INVALID  ("+s+")";
+  else if (one) s = "ONE  ("+s+")";
+  else if (s.length() == 0) s = "ZERO";
   if (names[numInputs()] != null) s = names[numInputs()] + " = " + s;
   return s;
  }
@@ -201,26 +212,25 @@ public class BinFunction {
   
   /**
    * @return
-   * returns the cardinality of the set M specified by this cube
+   * Returns the (cardinality ld 2) of the set specified by this cube so that 2^result = cardinality; result = -1, if cardinality is 0 (cube contains invalid)
    */
-  public BigInteger cardinality () { // untested!
-   BigInteger two = new BigInteger("2");
-   BigInteger n = new BigInteger("1");
+  public int cardinality2 () {
+   int r = 0;
    for (int i = 0; i < width / 32; i++) {
     long p = cube[i];
     for (int j = 0; j < 32; j++) {
-     if ((p & INV) == INV) return new BigInteger("0");
-     if ((p & DC) == DC) n = n.multiply(two);
+     if ((p & DC) == INV) return -1;
+     if ((p & DC) == DC) r++;
      p = p >>> 2;
     }
    }
    long p = cube[cube.length-1];
    for (int j = 0; j < width % 32; j++) {
-    if ((p & INV) == INV) return new BigInteger("0");
-    if ((p & DC) == DC) n = n.multiply(two);
+    if ((p & DC) == INV) return -1;
+    if ((p & DC) == DC) r++;
     p = p >>> 2;
    }
-   return n;
+   return r;
   }
   
   /**
@@ -308,7 +318,7 @@ public class BinFunction {
   
   
   
- /*
+ 
  public static class IntersectFreeSet extends Set {
   private static final long serialVersionUID = 8905066173022612097L;
 
@@ -321,7 +331,8 @@ public class BinFunction {
    *  - Splits up c into smaller cubes and tries to add them, if c has intersections with the existing cubes.
    * @return
    * Returns true, if something was added
-   
+   */
+  @Override
   public boolean add(final Cube c) {
    for (int i = 0; i < this.size(); i++) {
     Cube a = c.and(this.get(i));
@@ -342,18 +353,27 @@ public class BinFunction {
   }
   
   /**
-   * Checks, wheather the given cube u is completely covered by this set
-   * @param u
-   * @return
-   
+   * Faster Check for Coverage than with super.covers()
+   */
+  @Override
   public boolean covers(final Cube u) {
-   BigInteger cover_card = new BigInteger("0");
+   boolean[] cover_cardinality = new boolean[u.width+1]; // init with false
    for (int i = 0; i < this.size(); i++) {
-    Cube a = u.and(this.get(i));
-    cover_card = cover_card.add(a.cardinality());
+    Cube a = this.get(i);
+    if (a == u) continue;
+    a = u.and(a);
+    int ca = a.cardinality2();
+    if (ca == -1) continue; // no intersection between this[i] and u
+    while (ca < cover_cardinality.length) if (cover_cardinality[ca]) {
+     cover_cardinality[ca] = false;
+     ca++;
+    } else {
+     cover_cardinality[ca] = true;
+     break;
+    }
    }
-   return cover_card.equals(u.cardinality());
+   return cover_cardinality[u.cardinality2()];
   }
  }
- */
+ 
 }
