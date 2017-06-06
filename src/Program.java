@@ -34,10 +34,11 @@ public class Program {
 	     Map.Entry<String, BLIF.Model> pair = it.next();
 	     System.out.println(" ========== Model "+pair.getKey()+" ========== ");
 	     for (int i = 0; i < pair.getValue().functions().size(); i++) {
-	      BinFunction fkt = pair.getValue().functions().get(i);
-          System.out.println("in:          "+fkt.toString());
-	      esp.run(fkt);
-          System.out.println("minimized:   "+fkt.toString());
+	      BinFunction in = pair.getValue().functions().get(i);
+	      BinFunction out = esp.run(in);
+          System.out.println("in:          "+in.toString());
+          System.out.println("minimized:   "+out.toString());
+          System.out.println("Result is valid? (Ludwig: Search for this println ;-)");
 	     }
 	    }
 	}

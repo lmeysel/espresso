@@ -2,6 +2,7 @@ package rs.espresso;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 import blif.BinFunction;
 import blif.BinFunction.*;
@@ -30,20 +31,18 @@ public class Espresso {
     /**
      * Runs the espresso algorithm.
      */
-    public void run (BinFunction fkt) {
-     this.fkt = fkt;
+    public BinFunction run (final BinFunction fkt) {
      
      log.info("Load function into Espresso...");
+     this.fkt = fkt;
      onDc = new IntersectFreeSet(fkt.numInputs());
      Er = new Set(fkt.numInputs());
      Rp = new Set(fkt.numInputs());
      for (int i = 0; i < fkt.on().size(); i++) {
       onDc.add(fkt.on().get(i).clone());
-      Rp.add(fkt.on().get(i));
+      Rp.add(fkt.on().get(i).clone());
      }
      for (int i = 0; i < fkt.dc().size(); i++) onDc.add(fkt.dc().get(i).clone());
-     fkt.on().clear();
-     fkt.dc().clear();
      
      log.info("Expand Rp...");
      for (int i = 0; i < Rp.size(); i++) Rp.set(i, bestExpansion(Rp.get(i)));
@@ -56,9 +55,10 @@ public class Espresso {
      }
      
      log.info("Remove totally redundant cubes from Rp..."); // Essential cubes, that are in Rp and Er, are now totally redundant in Rp
-     for (int i = Rp.size()-1; i >= 0; i--) if (Er.covers(Rp.get(i))) Rp.remove(i);
+     //for (int i = Rp.size()-1; i >= 0; i--) if (Er.covers(Rp.get(i))) Rp.remove(i);
+     Rp.removeIf((Cube c) -> Er.covers(c));
      
-     hier! // Espresso - find best cover and add all required cubes to Er
+     // hier! // Espresso - find best cover and add all required cubes to Er
      
      
      
@@ -87,8 +87,10 @@ public class Espresso {
 
      log.info("Reduce...");*/
      
-     log.info("Write result back into given function...");
-     fkt.on().addAll(Er);
+     log.info("Write result function function...");
+     BinFunction minimized = new BinFunction(fkt.numInputs());
+     minimized.on().addAll(Er);
+     for (int i = 0; i < fkt.names().length; i++) minimized.names()[i] = fkt.names()[i];
 
      // free memory
      onDc.clear();
@@ -98,6 +100,7 @@ public class Espresso {
      Rp.clear();
      Rp = null;
      this.fkt = null;
+     return minimized;
     }
 
 	private void weightAndSort(ArrayList<ExtCube> set) {
@@ -127,9 +130,23 @@ public class Espresso {
 		set.sort((c1, c2) -> c1.weight - c2.weight);
 		System.out.println();
 	}
+	
+	private int[] calcSumVector () {
+	 int[] v = new int[Rp.width()*2]; // initialized with 0
+	 for (int i = 0; i < Rp.size(); i++) {
+	  Cube c = Rp.get(i);
+	  for (int j = 0; j < Rp.width(); j++) {
+	   int l = c.getVar(j);
+	   if ((l & 1) != 0) v[j*2]++;
+       if ((l & 2) != 0) v[j*2+1]++;
+	  }
+	 }
+	 return v;
+	}
 
 	/**
-	 * Searches all possible expansions (tries all different orders) and takes this expansion, that covers the most other cubes of OnDc.
+	 * Searches all possible expansions (tries all different orders, requires OnDc to be initialized)
+	 * and takes this expansion, that covers the most other cubes in Rp.
 	 * @param c
 	 * @return
 	 */
@@ -151,7 +168,7 @@ public class Espresso {
        c.andVar(i,  oldV); // leave c unchanged!
        // compute coverCnt of the expanded cube
        e.coverCnt = 0;
-       for (int j = 0; j < onCnt; j++) {
+       for (int j = 0; j < Rp.size(); j++) {
         Cube a = e.and(onDc.get(j));
         if (a.equals(onDc.get(j))) e.coverCnt++; // this expansion of n covers +1 cube (if c is part of the on-set, this operation occurs at least one time!)
        }
