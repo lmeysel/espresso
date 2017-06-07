@@ -1,4 +1,4 @@
-
+package rs.espresso;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -9,7 +9,8 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import blif.*;
-import rs.espresso.Espresso;
+import rs.espresso.model.BinFunction;
+import rs.espresso.model.Model;
 
 /**
  * 
@@ -18,29 +19,29 @@ import rs.espresso.Espresso;
  * @version 19.05.2017
  */
 public class Program {
-	public static final Logger log = Logger.getLogger("espresso");
+	private static final Logger log = Logger.getLogger("espresso");
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		setUpLogger();
-		Espresso esp = new Espresso(log);
-		BLIF dat = new BLIF(log);
+		Espresso esp = new Espresso();
+		Parser dat = new Parser();
 		dat.addFromFile(args[0]);
 		// Minimize all functions
-		Iterator<Entry<String, BLIF.Model>> it = dat.models().entrySet().iterator();
-	    while (it.hasNext()) {
-	     Map.Entry<String, BLIF.Model> pair = it.next();
-	     System.out.println(" ========== Model "+pair.getKey()+" ========== ");
-	     for (int i = 0; i < pair.getValue().functions().size(); i++) {
-	      BinFunction in = pair.getValue().functions().get(i);
-	      BinFunction out = esp.run(in);
-          System.out.println("in:          "+in.toString());
-          System.out.println("minimized:   "+out.toString());
-          System.out.println("Result is valid? (Ludwig: Search for this println ;-)");
-	     }
-	    }
+		Iterator<Entry<String, Model>> it = dat.models().entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry<String, Model> pair = it.next();
+			System.out.println(" ========== Model " + pair.getKey() + " ========== ");
+			for (int i = 0; i < pair.getValue().functions().size(); i++) {
+				BinFunction in = pair.getValue().functions().get(i);
+				BinFunction out = esp.run(in);
+				System.out.println("in:          " + in.toString());
+				System.out.println("minimized:   " + out.toString());
+				System.out.println("Result is valid? (Ludwig: Search for this println ;-)");
+			}
+		}
 	}
 
 	/**

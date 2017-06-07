@@ -1,7 +1,5 @@
-#offset
-1-1
--11
-#onset
+.inputs a b c
+.outputs z
 000
 100
 010
