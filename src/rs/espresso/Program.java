@@ -10,7 +10,6 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import blif.*;
 import rs.espresso.model.BinFunction;
-import rs.espresso.model.Model;
 
 /**
  * 

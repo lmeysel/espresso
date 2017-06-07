@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 
 import rs.espresso.model.BinFunction;
 import rs.espresso.model.Cube;
-import rs.espresso.model.Model;
 
 /**
  * @author Mitja Stachowiak Describes one BLIF-Project, which can contain several models
