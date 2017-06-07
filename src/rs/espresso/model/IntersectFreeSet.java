@@ -31,19 +31,16 @@ public class IntersectFreeSet extends Set {
   }
   // c has no intersects with existing cubes
   c.keepFixed();
-  int l = 0;
+  /*int l = 0; // keep sorted
   int u = this.size();
   if (u > 0) do {
    int m = (l+u)/2;
    if (c.cardinality2() >= this.get(m).cardinality2()) l = m+1;
    else u = m;
   } while (l < u);
-  super.add(u, c);
+  super.add(u, c);*/
+  super.add(c);
   return true;
- }
- 
- public void makeCubesPrime() {
-  
  }
  
  /**

@@ -15,6 +15,7 @@ public class ExtCube extends Cube {
  int coverCnt = 0; // stores, how many other cubes of Rp this cube covers
  int processDepth = 0;
  boolean[] nonExpandableLiterals;
+ boolean expanded = false; // stores, weather this cube has been expanded in current expansion-procedure
 
  public ExtCube(int width) {
   super(width);
@@ -38,6 +39,17 @@ public class ExtCube extends Cube {
   r.coverCnt = this.coverCnt;
   r.processDepth = this.processDepth;
   r.nonExpandableLiterals = this.nonExpandableLiterals.clone();
+  r.expanded = this.expanded;
+  return r;
+ }
+ 
+ public int scalarProduct(int[] v) {
+  int r = 0;
+  for (int i = 0; i < this.width; i++) {
+   int l = this.getVar(i);
+   if ((l & 1) != 0) r += v[i*2];
+   if ((l & 2) != 0) r += v[i*2+1];
+  }
   return r;
  }
  

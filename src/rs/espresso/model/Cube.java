@@ -97,6 +97,10 @@ public class Cube {
   return true;
  }
  
+ public void invalidate () {
+  cube[0] = 0;
+ }
+ 
  /**
   * @return
   * Returns the (cardinality ld 2) of the set specified by this cube so that 2^result = cardinality; result = -1, if cardinality is 0 (cube contains invalid)

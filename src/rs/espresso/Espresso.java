@@ -7,7 +7,6 @@ import java.util.logging.Logger;
 import rs.espresso.model.BinFunction;
 import rs.espresso.model.Cube;
 import rs.espresso.model.IntersectFreeSet;
-import rs.espresso.model.Set;
 
 /**
  * 
@@ -17,10 +16,10 @@ import rs.espresso.model.Set;
  */
 public class Espresso {
  private IntersectFreeSet onDc = null; // TODO: Try weather the covering-check is faster with an intersect-free-set or with the Presto-Approach
- private BinFunction fkt = null;
  private final Logger log = Logger.getLogger("espresso");;
- private Set Er = null;
- private Set Rp = null;
+ private ExtendedSet Rp = null;
+ 
+ public boolean searchForBestExpansion = true;
     
 
     /**
@@ -35,31 +34,19 @@ public class Espresso {
     public BinFunction run (final BinFunction fkt) {
      
      log.info("Load function into Espresso...");
-     this.fkt = fkt;
      onDc = new IntersectFreeSet(fkt.numInputs());
-     Er = new Set(fkt.numInputs());
-     Rp = new Set(fkt.numInputs());
+     Rp = new ExtendedSet(fkt.numInputs());
      for (int i = 0; i < fkt.on().size(); i++) {
       onDc.add(fkt.on().get(i).clone());
-      Rp.add(fkt.on().get(i).clone());
+      Rp.add(fkt.on().get(i).clone(ExtCube.class));
      }
-     //onDc.makeCubesPrime();
-     //Rp.addAll(onDc);
      for (int i = 0; i < fkt.dc().size(); i++) onDc.add(fkt.dc().get(i).clone());
      
      log.info("Expand Rp...");
-     for (int i = 0; i < Rp.size(); i++) Rp.set(i, bestExpansion(Rp.get(i)));
+     expand();
+     log.info("Remove totally redundant cubes...");
+     Rp.removeIf((Cube c) -> !c.isValid());
      
-     log.info("Remove equal cubes and copy essential cubes to Er...");
-     for (int i = 0; i < Rp.size(); i++) {
-      Cube c = Rp.get(i);
-      for (int j = Rp.size()-1; j > i; j--) if (c.equals(Rp.get(j))) Rp.remove(j);
-      if (!Rp.covers(c)) Er.add(c); // don't remove cube from Rp here!
-     }
-     
-     log.info("Remove totally redundant cubes from Rp..."); // Essential cubes, that are in Rp and Er, are now totally redundant in Rp
-     //for (int i = Rp.size()-1; i >= 0; i--) if (Er.covers(Rp.get(i))) Rp.remove(i);
-     Rp.removeIf((Cube c) -> Er.covers(c));
      
      // hier! // Espresso - find best cover and add all required cubes to Er
      
@@ -90,19 +77,16 @@ public class Espresso {
 
      log.info("Reduce...");*/
      
-     log.info("Write result function function...");
+     log.info("Write result function...");
      BinFunction minimized = new BinFunction(fkt.numInputs());
-     minimized.on().addAll(Er);
+     for (int i = 0; i < Rp.size(); i++) minimized.on().add(Rp.get(i).clone(Cube.class));
      for (int i = 0; i < fkt.names().length; i++) minimized.names()[i] = fkt.names()[i];
 
      // free memory
      onDc.clear();
      onDc = null;
-     Er.clear();
-     Er = null;
      Rp.clear();
      Rp = null;
-     this.fkt = null;
      return minimized;
     }
 
@@ -134,10 +118,39 @@ public class Espresso {
         System.out.println();
     }*/
     
+    private void expand () {
+     for (int i = 0; i < Rp.size(); i++) ((ExtCube)Rp.get(i)).expanded = false;
+     do {
+      // find next cube to expand
+      int[] v = calcSumVector();
+      int foundS = Integer.MAX_VALUE;
+      int foundN = -1;
+      for (int i = 0; i < Rp.size(); i++) {
+       ExtCube c = Rp.get(i);
+       if (!c.isValid() || c.expanded) continue;
+       int s = c.scalarProduct(v);
+       if (s < foundS) {
+        foundS = s;
+        foundN = i;
+       }
+      }
+      if (foundN == -1) break;
+      // expand this cube
+      ExtCube c;
+      if (searchForBestExpansion) c = bestExpansion(Rp.get(foundN));
+      else c = fastExpansion(Rp.get(foundN));
+      c.expanded = true;
+      Rp.set(foundN, c);
+      // invalidate cubes, covered by the expanded one
+      for (int j = 0; j < Rp.size(); j++) if (j != foundN && c.and(Rp.get(j)).equals(Rp.get(j))) Rp.get(j).invalidate();
+     } while (true);
+    }
+    
     private int[] calcSumVector () {
      int[] v = new int[Rp.width()*2]; // initialized with 0
      for (int i = 0; i < Rp.size(); i++) {
-      Cube c = Rp.get(i);
+      ExtCube c = Rp.get(i);
+      if (!c.isValid() || c.expanded) continue;
       for (int j = 0; j < Rp.width(); j++) {
        int l = c.getVar(j);
        if ((l & 1) != 0) v[j*2]++;
@@ -153,14 +166,14 @@ public class Espresso {
      * @param c
      * @return
      */
-    private Cube bestExpansion(Cube c) {
+    private ExtCube bestExpansion(ExtCube c) {
      List<ExtCube> expOrder = new ArrayList<ExtCube>();
-     expOrder.add((ExtCube)c.clone(ExtCube.class));
+     expOrder.add(c);
      expOrder.get(0).processDepth = 0;
      boolean f;
      int processDepth = 0;
      do f = furtherExpand(expOrder, processDepth++); while (f);
-     Cube r = expOrder.get(expOrder.size()-1).clone(Cube.class);
+     ExtCube r = expOrder.get(expOrder.size()-1);
      expOrder.clear();
      return r;
     }
@@ -190,8 +203,10 @@ public class Espresso {
         // compute coverCnt of the expanded cube
         e.coverCnt = 0;
         for (int j = 0; j < Rp.size(); j++) {
-         Cube a = e.and(onDc.get(j));
-         if (a.equals(onDc.get(j))) e.coverCnt++; // this expansion of n covers +1 cube (if c is part of the on-set, this operation occurs at least one time!)
+         Cube cmp = Rp.get(j);
+         if (!cmp.isValid()) continue; // while expanding, there can be invalid cubes in the list
+         Cube a = e.and(cmp);
+         if (a.equals(cmp)) e.coverCnt++; // this expansion of n covers +1 cube (if c is part of the on-set, this operation occurs at least one time!)
         }
         // search for position to insert expanded cube
         int l = 0;
@@ -225,8 +240,8 @@ public class Espresso {
      * @param c
      * @return
      */
-    private Cube fastExpansion (Cube c) {
-     Cube r = c.clone();
+    private ExtCube fastExpansion (ExtCube c) {
+     ExtCube r = (ExtCube)c.clone();
      for (int i = 0; i < r.width; i++) {
       int oldV = r.getVar(i);
       if (oldV == BinFunction.DC) continue;
