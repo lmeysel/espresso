@@ -3,7 +3,7 @@ package blif;
 import java.util.ArrayList;
 import java.util.List;
 
-import rs.espresso.model.BinFunction;
+import rs.binfunction.BinFunction;
 
 public class Model {
 	private Parser parent;

@@ -1,4 +1,4 @@
-package rs.espresso.model;
+package rs.binfunction;
 
 import java.util.ArrayList;
 import java.util.List;

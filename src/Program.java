@@ -1,4 +1,4 @@
-package rs.espresso;
+
 
 import java.util.Iterator;
 import java.util.Map;
@@ -9,7 +9,8 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import blif.*;
-import rs.espresso.model.BinFunction;
+import rs.binfunction.BinFunction;
+import rs.espresso.Espresso;
 
 /**
  * 
@@ -26,8 +27,13 @@ public class Program {
 	public static void main(String[] args) {
 		setUpLogger();
 		Espresso esp = new Espresso();
+		// specify operation modi
+		esp.markEssentials = false;
+		esp.searchForBestExpansion = true;
+		esp.randomizedReduction = false;
+		// read data
 		Parser dat = new Parser();
-		dat.addFromFile(args[0]);
+		if (args.length > 0) dat.addFromFile(args[0]);
 		// Minimize all functions
 		Iterator<Entry<String, Model>> it = dat.models().entrySet().iterator();
 		while (it.hasNext()) {

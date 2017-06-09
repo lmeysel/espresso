@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
-import rs.espresso.model.BinFunction;
-import rs.espresso.model.Cube;
+import rs.binfunction.BinFunction;
+import rs.binfunction.Cube;
 
 /**
  * @author Mitja Stachowiak Describes one BLIF-Project, which can contain several models
