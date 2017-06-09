@@ -12,26 +12,30 @@ import rs.binfunction.IntersectFreeSet;
 import rs.binfunction.Set;
 
 /**
- * 
- * @author Ludwig Meysel
- * 
- * @version 19.05.2017
+ * The Espresso class manages the execution of the espresso-algorithm.
+ * @author Ludwig Meysel, Mitja Stachowiak
+ * @version 9.6.2017
  */
 public class Espresso {
- private IntersectFreeSet onDc = null; // TODO: Try weather the covering-check is faster with an intersect-free-set or with the Presto-Approach
+ private IntersectFreeSet onDc = null; // TODO: Check, how much faster the cover-check with the IntersectFreeSet is, compared to the Presto-Approach
  private int onCnt;
  private final Logger log = Logger.getLogger("espresso");;
  private ExtendedSet Rp = null;
  
- public boolean searchForBestExpansion = true;
- public boolean markEssentials = false;
- public boolean randomizedReduction = false;
+ public boolean searchForBestExpansion = true; // if false, use fastExpansion instead
+ public boolean markEssentials = false; // if true, cubes, that cover implicants that are not covered by any other cube, are marked as essentials and become neither reduces or expanded during the rest of the algorithm
+ public boolean randomizedReduction = false; // if true, not the largest cube is reduced first, but the order is random. ATTENTION: No deterministic result!
+ public int expansionSearchLimit = 65535; // When searching for the best expansion, paths, that are not in the best [expansionSearchLimit]-part of the list, are not longer regarded.
  
  public Espresso() { }
     
  
  /**
   * Runs the espresso algorithm.
+  * @param fkt
+  * the function to be minimized
+  * @return
+  * The minimized function
   */
  public BinFunction run (final BinFunction fkt) {
      
@@ -80,6 +84,11 @@ public class Espresso {
  }
  
  
+ /**
+  * goes through all cubes of Rp (Larger cubes first) and tries to reduce them.
+  * Deletes cubes, that are reduced to invalid.
+  * Leaves cubes, that are marked essential unchanged.
+  */
  private void reduce() {
   // sort: Reduce large cubes first
   if (randomizedReduction) Collections.shuffle(Rp);
@@ -126,10 +135,16 @@ public class Espresso {
  }
 
  
+ /**
+  * Calcs the sum-vector and the scalar product of each cube with this vector. Tries to expand the
+  * cube with the lowest product (bestExpansion or fastExpansion). Invalidates all cubes, that are fully covered by this cube.
+  * Repeats this procedure until all cubes are extended. Removes invalidated cubes from Rp.
+  */
  private void expand () {
   for (int i = 0; i < Rp.size(); i++) if (!((ExtCube)Rp.get(i)).isEssential) ((ExtCube)Rp.get(i)).expanded = false;
   do {
    // find next cube to expand
+   // TODO: Don't re-calc sum vector, if previous expansion was unsuccessfull
    int[] v = calcSumVector();
    int foundS = Integer.MAX_VALUE;
    int foundN = -1;
@@ -159,6 +174,10 @@ public class Espresso {
   System.out.println("Expanded: "+fkt.toString());*/
  }
  
+ /**
+  * @return
+  * The sum-vector of Rp
+  */
  private int[] calcSumVector () {
   int[] v = new int[Rp.width()*2]; // initialized with 0
   for (int i = 0; i < Rp.size(); i++) {
@@ -237,7 +256,7 @@ public class Espresso {
      } while (l < u);
      for (l = u-1; l >= 0; l--) if (e.compareCoverageTo(expOrder.get(l)) != 0) break;
      else if (e.equals(expOrder.get(l))) continue LITERALITERATOR; // e already exists in expOrder and has been regarded!
-     if (expOrder.size() - u < 65535) { // don't follow implausible expansion paths
+     if (expOrder.size() - u < expansionSearchLimit) { // don't follow implausible expansion paths
       // add the new, expanded cube to expList
       e.processDepth = processDepth+1;
       expOrder.add(u, e);
@@ -269,6 +288,13 @@ public class Espresso {
  }
  
  
+ /**
+  * @param a
+  * @param b
+  * @return
+  * returns true, if a has less cubes than b or if a and b have the same number of cubes,
+  * but a has less literals than b.
+  */
  private boolean costAisLower (ExtendedSet a, ExtendedSet b) {
   if (a.size() < b.size()) return true;
   if (a.size() > b.size()) return false;

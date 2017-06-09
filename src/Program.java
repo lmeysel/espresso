@@ -16,7 +16,7 @@ import rs.espresso.Espresso;
  * 
  * @author Ludwig Meysel
  * @author Mitja Stachowiak
- * @version 19.05.2017
+ * @version 9.6.2017
  */
 public class Program {
 	private static final Logger log = Logger.getLogger("espresso");
@@ -31,8 +31,9 @@ public class Program {
 		esp.markEssentials = false;
 		esp.searchForBestExpansion = true;
 		esp.randomizedReduction = false;
+		esp.expansionSearchLimit = 65535;
 		// read data
-		Parser dat = new Parser();
+		BLIF dat = new BLIF();
 		if (args.length > 0) dat.addFromFile(args[0]);
 		// Minimize all functions
 		Iterator<Entry<String, Model>> it = dat.models().entrySet().iterator();

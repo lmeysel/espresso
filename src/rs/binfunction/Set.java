@@ -3,6 +3,11 @@ package rs.binfunction;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
+/**
+ * The class Set represents one set of several cubes.
+ * @author Mitja Stachowiak
+ *
+ */
 public class Set extends ArrayList<Cube> {
  private static final long serialVersionUID = -8446625631682699485L;
  private final int width;    public int width () { return this.width; }
@@ -22,6 +27,7 @@ public class Set extends ArrayList<Cube> {
   * If u is element of this, the function checks, weather u is covered by this without u
   * @param u
   * @return
+  * true, if u is covered
   */
  public boolean covers(final Cube u) { return covers(u, u, null); }
  public boolean covers(final Cube u, final Cube ignore, final ForeignCoverer foreignCoverer) {
@@ -61,7 +67,10 @@ public class Set extends ArrayList<Cube> {
  
  
  
- 
+ /**
+  * Functionpointer: Override isCovered to run a covering-check over more than one set.
+  * @author Mitja Stachowiak
+  */
  public static abstract class ForeignCoverer {
   protected abstract boolean isCovered(Cube c);
  }

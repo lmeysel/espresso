@@ -1,5 +1,10 @@
 package rs.binfunction;
 
+/**
+ * The intersect-free set's add-method splits cubes, that intersect with existing cubes in the set,
+ * so that none implicant is covered by more than one cube.
+ * @author Mitja Stachowiak
+ */
 public class IntersectFreeSet extends Set {
  private static final long serialVersionUID = 8905066173022612097L;
 

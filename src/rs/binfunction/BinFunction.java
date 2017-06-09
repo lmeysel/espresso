@@ -5,9 +5,7 @@ import java.util.List;
 
 /**
  * BinFunction describes a logic function, that has an onset and a don't-care set.
- * 
  * @author Mitja Stachowiak, Ludwig Meysel
- *
  */
 public class BinFunction {
  private final Set on;    public Set on () { return this.on; }
@@ -29,9 +27,11 @@ public class BinFunction {
  }
  
  /**
-  * Computes the off-set from onset and dc-set (Extremely slow)
+  * Complementation: Computes the off-set from on-set and dc-set (Extremely slow)
   * @return
+  * The off-set
   * @throws Exception
+  * Fails, if there are invalid cubes in the function.
   */
  public List<Cube> computeOff () throws Exception {
   List<Cube> onDc = new ArrayList<Cube>(); // onDc contains all implicants that are not in the offset. So not onDC is the offset, which has to be expanded to get a disjunctive form
@@ -83,6 +83,7 @@ public class BinFunction {
   }
  }
  
+ @Override
  public String toString () { return toString(on); }
  public String toString (Set set) {
   String s = "";

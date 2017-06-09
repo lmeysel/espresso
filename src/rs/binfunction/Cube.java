@@ -89,6 +89,8 @@ public class Cube {
   return r;
  }
  
+ @Override
+ public boolean equals (Object foreign) { return equals((Cube)foreign); }
  public boolean equals (Cube foreign) {
   if (width != foreign.width) return false;
   for (int i = 0; i < cube.length; i++) if (cube[i] != foreign.cube[i]) return false;
@@ -96,7 +98,7 @@ public class Cube {
  }
  
  public void invalidate () {
-  cube[0] = 0;
+  if (width > 0) cube[0] = 0; // set the 0-th part to zero for faster isValid-Check.
  }
  
  /**
