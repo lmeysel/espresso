@@ -1,2 +1,10 @@
 /bin/
 .classpath
+/documentation/report/*.aux
+/documentation/report/*.bbl
+/documentation/report/*.blg
+/documentation/report/*.log
+/documentation/report/*.toc
+/documentation/report/*.sav
+/documentation/report/*.log
+**/~*
