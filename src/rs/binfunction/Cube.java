@@ -12,7 +12,7 @@ import java.util.Arrays;
 public class Cube {
  protected static final long TOTAL_INVALID = Long.parseUnsignedLong("FFFFFFFFFFFFFFFF", 16);
  public final int width;
- public final long[] cube;
+ protected final long[] cube;
  private int card = -1;
  
  public Cube(int width) {

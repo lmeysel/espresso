@@ -17,6 +17,7 @@ public class Set extends ArrayList<Cube> {
   this.width = width;
  }
  
+ @Override
  public boolean add(Cube c) {
   if (c.width != this.width) return false;
   return super.add(c);

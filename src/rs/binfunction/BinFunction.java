@@ -1,8 +1,5 @@
 package rs.binfunction;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * BinFunction describes a logic function, that has an onset and a don't-care set.
  * @author Mitja Stachowiak, Ludwig Meysel
@@ -17,8 +14,8 @@ public class BinFunction {
  public final static int ONE = 2;
  public final static int ZERO = 1;
  public final static int DC = 3;
- public final static int inverseONE = 1;
- public final static int inverseZERO = 2;
+ private final static int inverseONE = 1;
+ private final static int inverseZERO = 2;
  
  public BinFunction (int numInputs) {
   this.on = new Set(numInputs);
@@ -33,14 +30,14 @@ public class BinFunction {
   * @throws Exception
   * Fails, if there are invalid cubes in the function.
   */
- public List<Cube> computeOff () throws Exception {
-  List<Cube> onDc = new ArrayList<Cube>(); // onDc contains all implicants that are not in the offset. So not onDC is the offset, which has to be expanded to get a disjunctive form
+ public Set computeOff () throws Exception {
+  Set onDc = new Set(numInputs()); // onDc contains all implicants that are not in the offset. So not onDC is the offset, which has to be expanded to get a disjunctive form
   onDc.addAll(this.on);
   onDc.addAll(this.dc);
   // ToDo: sort cube for reaching don't cares early and merging overlaps
   Cube n;
   n = new Cube(numInputs());
-  List<Cube> off = new ArrayList<Cube>();
+  Set off = new Set(numInputs());
   multiply(0, n, onDc, off);
   return off;
  }
@@ -59,7 +56,7 @@ public class BinFunction {
   * the expanded disjunctive result
   * @throws Exception
   */
- private void multiply (int impl, Cube prod, List<Cube> src, List<Cube> dst) throws Exception {
+ private void multiply (int impl, Cube prod, Set src, Set dst) throws Exception {
   if (impl >= src.size()) {
    dst.add(prod);
    return;
