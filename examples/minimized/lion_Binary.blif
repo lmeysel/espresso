@@ -1,21 +1,6 @@
 .inputs I1 I0
 .outputs O0
 
-.names a b c r
-1-0 1
--10 1
-0-1 1
--01 1
-
-.names a b c r
--01 1
-0-- 1
--10 1
-
-.names a b c d r
---11 1
-11-- 1
-
 .names S1 S0 I1 I0 next_S1
 -001 1
 -111 1

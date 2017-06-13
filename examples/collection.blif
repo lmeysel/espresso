@@ -1,2 +1,15 @@
+# Simple test
 .subckt lion_Binary.blif
+
+# Hard Examples
+.subckt hard_examples/ex1010
+.subckt hard_examples/ibm
+.subckt hard_examples/misj
 .subckt hard_examples/pdc
+.subckt hard_examples/shift
+.subckt hard_examples/signet
+.subckt hard_examples/soar.pla
+.subckt hard_examples/ibm
+.subckt hard_examples/test2
+.subckt hard_examples/test3
+.subckt hard_examples/ts10
