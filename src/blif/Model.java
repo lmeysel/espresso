@@ -15,8 +15,8 @@ public class Model {
  private BLIF parent;    public BLIF parent() { return this.parent; }
  private String name;   public String name() { return this.name; }
  public List<BinFunction> functions = new ArrayList<BinFunction>();   public List<BinFunction> functions() { return this.functions; }
- public String[] inputs;
- public String[] outputs;
+ public String[] inputs = new String[0];
+ public String[] outputs = new String[0];
  public boolean isSeparateFile = false;
  boolean saved = false;
 
@@ -30,13 +30,23 @@ public class Model {
  public void appendToFile(FileWriter fileWriter, boolean firstModel) throws IOException {
   //write opening of model
   if (!firstModel) fileWriter.write(".model "+this.name+"\n");
+  if (this.inputs.length != 0) {
+   String s = ".inputs";
+   for (int i = 0; i < this.inputs.length; i++) s += " "+this.inputs[i];
+   fileWriter.write(s+"\n");
+  }
+  if (this.outputs.length != 0) {
+   String s = ".outputs";
+   for (int i = 0; i < this.outputs.length; i++) s += " "+this.outputs[i];
+   fileWriter.write(s+"\n");
+  }
   // write functions
   for (int i = 0; i < functions.size(); i++) {
    BinFunction f = functions.get(i);
    if (f.numInputs() == 0) continue;
    if (f.names()[0] == null) {
-    fileWriter.write("i "+f.numInputs()+"\n");
-    fileWriter.write("o 1\n");
+    fileWriter.write(".i "+f.numInputs()+"\n");
+    fileWriter.write(".o 1\n");
    } else {
     String s = "\n.names";
     for (int j = 0; j < f.names().length; j++) s += " "+f.names()[j];

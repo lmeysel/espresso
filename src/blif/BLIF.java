@@ -25,6 +25,7 @@ public class BLIF {
 	public HashMap<String, Model> models() {
 		return models;
 	}
+	public boolean autoNameVariables = true;
 	private static final Logger log = Logger.getLogger("espresso");
 
  /**
@@ -68,6 +69,14 @@ public class BLIF {
        if (sp.length < 2) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": Name of model not specified!"); break LINEREADER; }
        try { currentModel = new Model(sp[1], this); } catch (Exception e) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": "+e.getMessage()); break LINEREADER; }
        break;
+      case ".inputs" :
+       currentModel.inputs = new String[sp.length-1];
+       for (int i = 1; i < sp.length; i++) currentModel.inputs[i-1] = sp[i];
+       break;
+       case ".outputs" :
+        currentModel.outputs = new String[sp.length-1];
+        for (int i = 1; i < sp.length; i++) currentModel.outputs[i-1] = sp[i];
+        break;
       case ".i" :
        if (sp.length < 2) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": No paramater given for .i"); break LINEREADER; }
        try { nextInCnt = Integer.parseInt(sp[1]); } catch (NumberFormatException e) { log.severe("Parsing stopped at line "+n+" of file "+file.getName()+": Invalid integer!"); break LINEREADER; }
@@ -108,6 +117,15 @@ public class BLIF {
        if (nextNames != null) { // copy stored variable names to the new functions
         for (int j = 0; j < nextInCnt; j++) if (j < nextNames.length) currentFunctions[i].names()[j] = nextNames[j];
         if (i + nextInCnt < nextNames.length) currentFunctions[i].names()[nextInCnt] = nextNames[i + nextInCnt];
+       } else if (autoNameVariables) { // automatically name unspecified variables (i.e. in pla-descriptions)
+        for (int j = 0; j < nextInCnt; j++) currentFunctions[i].names()[j] = "x"+j;
+        currentFunctions[i].names()[nextInCnt] = "z"+i;
+        if (currentModel.inputs.length == 0) {
+         currentModel.inputs = new String[nextInCnt];
+         currentModel.outputs = new String[nextOutCnt];
+         for (int j = 0; j < nextInCnt; j++) currentModel.inputs[j] = currentFunctions[i].names()[j];
+        }
+        currentModel.outputs[i] = currentFunctions[i].names()[nextInCnt];
        }
        currentModel.functions.add(currentFunctions[i]);
       }

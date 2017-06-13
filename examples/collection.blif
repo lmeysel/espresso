@@ -1,2 +1,2 @@
-#.subckt lion_Binary.blif
+.subckt lion_Binary.blif
 .subckt hard_examples/pdc
