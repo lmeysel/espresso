@@ -100,10 +100,39 @@
  The reduction is kind of the reverse operation of the expansion. Dont-cares are tried to set to zero or ones. This change is accepted when the whole function is still covered.
 
  \chapter{Evaluation}
- For the evaluation some benchmarks have been tested. The main focus is on the runtime of the algorithm, the number of cubes before and after the minimization. As reference the \textit{ABC Sequential Systhesis and Verification} package is given for comparing the results. First of all, the runtime of the ABC-implementation is not really comparable to ours. What ABC does within a ``tick'' takes multiple minutes in our implementation of ESPRESSO.
- \par
+ For the evaluation some benchmarks have been tested. The main focus is on the runtime of the algorithm, the number of cubes before and after the minimization. As reference the \textit{ABC Sequential Systhesis and Verification} package is given for comparing the results. First of all, the runtime of the ABC-implementation is not really comparable to ours. What ABC does within a ``tick'' takes multiple minutes in our implementation of ESPRESSO. For smaller examples our implementation works fine when the following condiditions are given:
+ \begin{itemize}
+  \begin{item}
+  No dont-care-outputs should exist. The problem with dont-cares is not that our algorithm does not work, but it seems ABC ignores these dont-cares. Therefore our results could not be validated reliably. A specific test was the benchmark \textit{hard\_examples/pdc}. This file is completely separated in ON-set and DC-set. When removing the DC-set, our implementation seems to return an equal result like ABC (i.e. same number of cubes and random samples were equal). Keeping the DC-set our implementation reduces the number of cubes drastically, whereas ABC seems to ignore the DC-set.
+  \end{item}
+  \begin{item}
+  Our solution seems to have a bug which we could not fix due to the remaining time for the minitask. It seems to be an issue with the calculation of the \code{long}-array-offset for functions with more than 32 Variables. At this point there are at least two longs per cube required. The offset seems to be calculated wrong at any point.
+  \end{item}
+\\
+  For those functions where our implementation seems to work correctly was the minimization as depicted in table~\ref{tbl:foobar}.
+
+  \begin{table}
+    \center
+    \begin{tabular} { | l | c | c | c | c | c |}
+      \hline
+      \textbf{Benchmark} & inputs & functions &  cubes total & cubes ABC &  cubes our impl. \\
+      \hline
+      lion\_Binary.blif (Moodle-Example) & 4 & 3 & 18 & 11 & 11 \\
+      pdc (DCs removed) & 16 & 40 & 2417 & 448 & 449 \\
+      ex1010 (setting DCs to ON) & 10 & 10 & 1146 & 1026 & 1090 \\
+      ex1010 & 10 & 10 & 1026 & 953 & 465 \\
+      \hline
+    \end{tabular}
+    \caption{Results comparison}
+    \label{tbl:foobar}
+  \end{table}
+
+ \end{itemize}
  
- 
+ \chapter{Conclusion}
+ Espresso turned out to be a very broad resarch field. There are many possibilities a developer can optimize the algorithm. The main problem we were not able to solve is the calculation of the OFF-set which is, according to the lecture, probably one of the biggest performance losses. Therefore the next step to continue this project would be to find an efficient computation of the complement of a set. Another pretty important To-Do is the bugfixing for functions having more than 32 variables.
+ \\
+  The project is realized in about 2300 lines of code.
 
   \bibliographystyle{plain}
   \bibliography{references}
