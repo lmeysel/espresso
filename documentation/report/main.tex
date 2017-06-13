@@ -79,15 +79,30 @@
  The expansion tries to create greater cubes, i. e. cubes which cover more minterms. Therefore an expanded cube has covers at least two minterms. The second expansion would cover four minterms, and so on. All of those minterms must be part of the ON- or DC-set, but must not be part of the OFF-set. As already mentoined in our implementation there is no explicit knowledge about the OFF-set, therefore each expanded cube must be part of the ON- or DC-set.
 
  \section{Remove redundant cubes}
- The removal of redundant cubes offers some new interesting issues. Fig.~\ref{fig:redundancy} (a) shows 5 possible cubes. First, there are different combinations which result in possible sets. Obviously (c) is better than (b) due to the fact that it has no redundancy.
+ The removal of redundant cubes offers some new interesting issues. Fig.~\ref{fig:redundancy} (a) shows 5 possible cubes. First, there are different combinations which result in possible sets. Obviously (c) is better than (b) due to the fact that it has no redundancy. How to remove redundant cubes has already been explained within the lecture \cite{Hochberger2017}, and therefore wont be descussed here.
  \begin{figure}
    \centering
    \includegraphics{redundancy}
-   \caption{Possible cubes (a), redundand cubes (b), optimal set (c)}
+   \caption{Possible cubes (a), redundand cubes (b), optimal set (c); Source: \cite{Hochberger2017}}
    \label{fig:redundancy}
  \end{figure}
 
- How to remove redundant cubes has already been explained within the lecture \cite{Hochberger2017}. 
+ A more interesting problem at this point is, how to handle irredundant cubes. As depicted in fig.~\ref{fig:redundancy} (b) there are four cubes which intersect and obviously there could be found a better set (c). The problem here is, that in this constellation all cubes are essential, and therefore they are removed from the ``working''-set, the one which will be reduced in the next step. But when removing all four essentials from the working-set, it is empty then and the algorithm terminates.
+ \par
+ On the one hand this is a result of the heuristic approach, on the other hand, it looks like this a problem which could be solved easily. When having a closer look to the function (see fig.~\ref{fig:redundancy2}) and inspecting the column- and row-sums of the function, we see there will happen no reordering of the minterms, whereas this reordering is fundamental for the heuristic. One approach would be, to reorder the rows randomly when the row-sums are equal. But minimizing the function this way, in the worst case every possible combination must be tried in order to minimize the original function. For larger functions that could take a very long time. Therefore it is reasonable to neglect this very special and unlikely case.
+
+ \begin{figure}
+   \centering
+   \includegraphics{redundancy2}
+   \caption{Column- and row-sums of function in fig.~\ref{fig:redundancy}}
+   \label{fig:redundancy2}
+ \end{figure}
+
+ \section{Reduction}
+ The reduction is kind of the reverse operation of the expansion. Dont-cares are tried to set to zero or ones. This change is accepted when the whole function is still covered.
+
+ \chapter{Evaluation}
+ For the evaluation some benchmarks have been tested. The main focus is on the runtime of the algorithm, the number of cubes before and after the minimization.
  
 
   \bibliographystyle{plain}
