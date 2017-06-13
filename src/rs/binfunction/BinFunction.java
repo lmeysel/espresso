@@ -81,7 +81,11 @@ public class BinFunction {
  }
  
  @Override
- public String toString () { return on.toString(this.names); }
+ public String toString () {
+  String r = on.toString(this.names);
+  if (dc.size() > 0) r += "     DC_"+dc.toString(this.names);
+  return r;
+ }
  
  public String isEquivalent(BinFunction foreign) {
   if (this.numInputs() != foreign.numInputs()) return "no (different number of inputs)";

@@ -157,8 +157,8 @@ public class Cube {
   * Gets a flag indicating whether the cube is valid (i.e. contains no invalid-bit)
   */
  public boolean isValid() {
+  // TODO: Time critical function! Don't check each literal separately but continuously shift each long or try mask operations
   for (int i = 0; i < width; i++) if (getVar(i) == BinFunction.INV) return false; // One variable is invalid
-  //for (int i = width; i < cube.length*32; i++) if (getVar(i) != BinFunction.DC) return false; // Unused variable > width is not don't care
   return true;
  }
 }

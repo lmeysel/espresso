@@ -26,11 +26,6 @@ public class Program {
 	public static void main(String[] args) {
 		setUpLogger();
 		Espresso esp = new Espresso();
-		// specify operation modi
-		/*
-		 * esp.markEssentials = false; esp.searchForBestExpansion = true; esp.randomizedReduction =
-		 * false; esp.expansionSearchLimit = 65535;
-		 */
 		// read data
 		BLIF dat = new BLIF();
 		if (args.length == 0)
