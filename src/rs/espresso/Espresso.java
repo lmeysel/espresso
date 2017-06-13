@@ -17,15 +17,18 @@ import rs.binfunction.Set;
  * @version 9.6.2017
  */
 public class Espresso {
- private IntersectFreeSet onDc = null; // TODO: Check, how much faster the cover-check with the IntersectFreeSet is, compared to the Presto-Approach
+ private Set onDc = null; // TODO: Check, how much faster the cover-check with the IntersectFreeSet is, compared to the Presto-Approach
  private int onCnt;
  private final Logger log = Logger.getLogger("espresso");;
  private ExtendedSet Rp = null;
+ private BinFunction fkt;
  
  public boolean searchForBestExpansion = true; // if false, use fastExpansion instead
  public boolean markEssentials = false; // if true, cubes, that cover implicants that are not covered by any other cube, are marked as essentials and become neither reduces or expanded during the rest of the algorithm
  public boolean randomizedReduction = false; // if true, not the largest cube is reduced first, but the order is random. ATTENTION: No deterministic result!
  public int expansionSearchLimit = 65535; // When searching for the best expansion, paths, that are not in the best [expansionSearchLimit]-part of the list, are not longer regarded.
+ public boolean useIntersectFreeSet = true; // Create the onDc as intersect-free-set
+ public boolean logAllActions = true;
  
  public Espresso() { }
     
@@ -38,9 +41,10 @@ public class Espresso {
   * The minimized function
   */
  public BinFunction run (final BinFunction fkt) {
-     
   log.info("Load function into Espresso...");
-  onDc = new IntersectFreeSet(fkt.numInputs());
+  this.fkt = fkt;
+  if (useIntersectFreeSet) onDc = new IntersectFreeSet(fkt.numInputs());
+  else onDc = new Set(fkt.numInputs());
   Rp = new ExtendedSet(fkt.numInputs());
   for (int i = 0; i < fkt.on().size(); i++) {
    onDc.add(fkt.on().get(i).clone());
@@ -80,6 +84,7 @@ public class Espresso {
   onDc = null;
   Rp.clear();
   Rp = null;
+  this.fkt = null;
   return minimized;
  }
  
@@ -129,9 +134,11 @@ public class Espresso {
   }
   // remove covered/invalid cubes from Rp
   Rp.removeIf((Cube c) -> !c.isValid());
-  /*BinFunction fkt = new BinFunction(Rp.width());
-  fkt.on().addAll(Rp);
-  System.out.println("Reduced: "+fkt.toString());*/
+  if (logAllActions) {
+   BinFunction fkt = new BinFunction(Rp.width());
+   fkt.on().addAll(Rp);
+   log.info("Reduced: "+fkt.toString()+"     valid: "+fkt.isEquivalent(this.fkt));
+  }
  }
 
  
@@ -165,13 +172,18 @@ public class Espresso {
    c.expanded = true;
    Rp.set(foundN, c);
    // invalidate cubes, covered by the expanded one
-   for (int j = 0; j < Rp.size(); j++) if (j != foundN && c.and(Rp.get(j)).equals(Rp.get(j))) Rp.get(j).invalidate();
+   for (int j = 0; j < Rp.size(); j++) {
+    ExtCube co = Rp.get(j);
+    if (!co.expanded && c.and(co).equals(co)) co.invalidate();
+   }
   } while (true);
   // remove covered/invalid cubes from Rp
   Rp.removeIf((Cube c) -> !c.isValid());
-  /*BinFunction fkt = new BinFunction(Rp.width());
-  fkt.on().addAll(Rp);
-  System.out.println("Expanded: "+fkt.toString());*/
+  if (logAllActions) {
+   BinFunction fkt = new BinFunction(Rp.width());
+   fkt.on().addAll(Rp);
+   log.info("Expanded: "+fkt.toString()+"     valid: "+fkt.isEquivalent(this.fkt));
+  }
  }
  
  /**
@@ -208,9 +220,6 @@ public class Espresso {
   int processDepth = 0;
   do f = furtherExpand(expOrder, processDepth++); while (f);
   ExtCube r = expOrder.get(expOrder.size()-1);
-  /*String s = "";
-  for (int i = 0; i < expOrder.size(); i++) s += " " +expOrder.get(i).coverCnt;
-  System.out.println(s);*/
   expOrder.clear();
   return r;
  }

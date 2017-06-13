@@ -4,8 +4,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import rs.binfunction.BinFunction;
@@ -135,7 +139,57 @@ public class BLIF {
   } catch (IOException e) {
    log.severe("Error while reading file "+fileName+"!");
   }
+  firstModel.isSeparateFile = true;
   return firstModel;
+ }
+ 
+ public void saveToFolder(String path) {
+  if (path.lastIndexOf("/") != path.length()-1 && path.lastIndexOf("\\") != path.length()-1) path += "/";
+  // mark all models unsaved
+  Iterator<Entry<String, Model>> it = this.models().entrySet().iterator();
+  while (it.hasNext()) {
+   Map.Entry<String, Model> pair = it.next();
+   pair.getValue().saved = false;
+  }
+  // save models
+  it = this.models().entrySet().iterator();
+  FileWriter fileWriter = null;  
+  File file = null;
+  boolean firstModel;
+  while (it.hasNext()) {
+   Map.Entry<String, Model> pair = it.next();
+   Model model = pair.getValue();
+   if (model.saved) continue;
+   model.saved = true;
+   firstModel = false;
+   if (model.isSeparateFile) {
+    firstModel = true;
+    String n = path+model.name();
+    if (n.lastIndexOf(".blif") != n.length()-5) n += ".blif";
+    file = new File(n);
+    try {
+     if (fileWriter != null) {
+      fileWriter.flush();
+      fileWriter.close();
+      fileWriter = null;
+     }
+     fileWriter = new FileWriter(file);
+    } catch (IOException e) {
+     log.severe("Error while writing to file "+file.getName()+"!");
+    }
+   }
+   if (fileWriter != null)
+    try {
+     model.appendToFile(fileWriter, firstModel);
+    } catch (IOException e) {
+     log.severe("Error while writing to file "+file.getName()+"!");
+    }
+  }
+  try { if (fileWriter != null) {
+   fileWriter.flush();
+   fileWriter.close();
+   fileWriter = null;
+  } } catch (IOException e) { log.severe("Error while closing file!"); }
  }
 
 }
