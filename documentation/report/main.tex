@@ -69,13 +69,26 @@
   \section{Computation of the complement}
   We decided to spare the computation of the function complement - there are more or less easy-to-implement approaches which handle different problems coming up with the computation. One of the main challenges of the complement computation is as already mentioned before: Memory. Having a 32-input-\code{BinFunction} would at least now lead to a memory-problem if the complement cannot be computed directly optimized.
   \par
-  A straight-forward approach would be to iterate over each combination of the function and remove all those which are already included in the ON-set or the DC-set. But using a 32-input-function again would result in a huge amount of implicants, which require a lot of memory. Additionally, checking the expanded cubes against the non-optimized OFF-set results in very much iterations. So it is obvious that calculating the complement does only make sense when getting a more or less simplified result. There exist approaches for that, but this task was more about implementing espresso therefore we decided to spare the computation of the OFF-set and used the technique from PRESTO. This is instead of computing OFF-set and checking the expanded cubes against it, just checking if the expanded cubes aginst the ON- and DC-set.
+  A straight-forward approach would be to iterate over each combination of the function and remove all those which are already included in the ON-set or the DC-set. But using a 32-input-function again would result in a huge amount of implicants, which require a lot of memory. Additionally, checking the expanded cubes against the non-optimized OFF-set results in very much iterations. So it is obvious that calculating the complement does only make sense when getting a more or less simplified result. There exist approaches for that, but this task was more about implementing espresso therefore we decided to spare the computation of the OFF-set and used the technique from PRESTO. This is instead of computing OFF-set and checking the expanded cubes against it, just checking if the expanded cubes are part of the ON- or DC-set.
   \par
   The drawback of this approach is that any expanded cube must be checked against the full ON- and DC-set, to detect coverage. Having a relatively small function, say 10 input variables ($2^{10}=1024$ possible combinations) with 100 cubes forming the ON- and DC-set, there are 924 implicants remaining in the OFF-set. That means the most expansions will collide with the OFF-set. That does also mean that checking against the OFF-set would not require to iterate over the full OFF-set, because when one collision is found, the iteration can be stopped. Furthermore when having a minimized OFF-set, it is pretty likely that it has only few cubes with many dont-cares.
   \par
-  According to the lecture, it is already known, that ESPRESSO in general would run faster with the initial complement computation instead of using the PRESTO approach. We decided for the PRESTO approach, however, to focus on the ESPRESSO implementation itselft, but not on the complement computation.
+  According to the lecture, it is already known, that ESPRESSO in general would run faster with the initial complement computation instead of using the PRESTO approach. We decided to use the PRESTO approach, however, to focus on the ESPRESSO implementation itself, but not on the complement computation.
 
  \section{Expansion}
+ The expansion tries to create greater cubes, i. e. cubes which cover more minterms. Therefore an expanded cube has covers at least two minterms. The second expansion would cover four minterms, and so on. All of those minterms must be part of the ON- or DC-set, but must not be part of the OFF-set. As already mentoined in our implementation there is no explicit knowledge about the OFF-set, therefore each expanded cube must be part of the ON- or DC-set.
+
+ \section{Remove redundant cubes}
+ The removal of redundant cubes offers some new interesting issues. Fig.~\ref{fig:redundancy} (a) shows 5 possible cubes. First, there are different combinations which result in possible sets. Obviously (c) is better than (b) due to the fact that it has no redundancy.
+ \begin{figure}
+   \centering
+   \includegraphics{redundancy}
+   \caption{Possible cubes (a), redundand cubes (b), optimal set (c)}
+   \label{fig:redundancy}
+ \end{figure}
+
+ How to remove redundant cubes has already been explained within the lecture \cite{Hochberger2017}. 
+ 
 
   \bibliographystyle{plain}
   \bibliography{references}
