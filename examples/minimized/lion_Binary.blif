@@ -1,3 +1,5 @@
+.inputs I1 I0
+.outputs O0
 
 .names a b c r
 1-0 1

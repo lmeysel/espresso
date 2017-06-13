@@ -26,7 +26,7 @@ public class Espresso {
  public boolean searchForBestExpansion = true; // if false, use fastExpansion instead
  public boolean markEssentials = true; // if true, cubes, that cover implicants that are not covered by any other cube, are marked as essentials and become neither reduces or expanded during the rest of the algorithm
  public boolean randomizedReduction = false; // if true, not the largest cube is reduced first, but the order is random. ATTENTION: No deterministic result!
- public int expansionSearchLimit = 10; // When searching for the best expansion, paths, that are not in the best [expansionSearchLimit]-part of the list, are not longer regarded.
+ public int expansionSearchLimit = 24; // When searching for the best expansion, paths, that are not in the best [expansionSearchLimit]-part of the list, are not longer regarded.
  public boolean useIntersectFreeSet = true; // Create the onDc as intersect-free-set
  public boolean logAllActions = false;
  
@@ -174,7 +174,7 @@ public class Espresso {
    // invalidate cubes, covered by the expanded one
    for (int j = 0; j < Rp.size(); j++) {
     ExtCube co = Rp.get(j);
-    if (!co.expanded && c.and(co).equals(co)) co.invalidate();
+    if (!co.expanded && co.and(c).equals(co)) co.invalidate();
    }
   } while (true);
   // remove covered/invalid cubes from Rp
