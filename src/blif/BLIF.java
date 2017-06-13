@@ -17,13 +17,15 @@ import rs.binfunction.Cube;
 
 /**
  * Describes one BLIF-Project, which can contain several models
+ * 
  * @author Mitja Stachowiak
  */
 public class BLIF {
- HashMap<String, Model> models = new HashMap<String, Model>();    public HashMap<String, Model> models() { return models; }
- private static final Logger log = Logger.getLogger("espresso");
- 
- public BLIF() { }
+	HashMap<String, Model> models = new HashMap<String, Model>();
+	public HashMap<String, Model> models() {
+		return models;
+	}
+	private static final Logger log = Logger.getLogger("espresso");
 
  /**
   * Adds all models from the given file to the BLIF-project
