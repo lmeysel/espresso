@@ -28,7 +28,7 @@ public class Espresso {
  public boolean randomizedReduction = false; // if true, not the largest cube is reduced first, but the order is random. ATTENTION: No deterministic result!
  public int expansionSearchLimit = 65535; // When searching for the best expansion, paths, that are not in the best [expansionSearchLimit]-part of the list, are not longer regarded.
  public boolean useIntersectFreeSet = true; // Create the onDc as intersect-free-set
- public boolean logAllActions = true;
+ public boolean logAllActions = false;
  
  public Espresso() { }
     
@@ -174,7 +174,7 @@ public class Espresso {
    // invalidate cubes, covered by the expanded one
    for (int j = 0; j < Rp.size(); j++) {
     ExtCube co = Rp.get(j);
-    if (!co.expanded && c.and(co).equals(co)) co.invalidate();
+    if (!co.expanded && co.and(c).equals(co)) co.invalidate();
    }
   } while (true);
   // remove covered/invalid cubes from Rp

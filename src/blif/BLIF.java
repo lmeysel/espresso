@@ -139,7 +139,7 @@ public class BLIF {
   } catch (IOException e) {
    log.severe("Error while reading file "+fileName+"!");
   }
-  firstModel.isSeparateFile = true;
+  if (firstModel != null) firstModel.isSeparateFile = true;
   return firstModel;
  }
  

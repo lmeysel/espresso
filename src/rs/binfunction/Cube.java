@@ -158,7 +158,7 @@ public class Cube {
   */
  public boolean isValid() {
   for (int i = 0; i < width; i++) if (getVar(i) == BinFunction.INV) return false; // One variable is invalid
-  for (int i = width; i < cube.length*32; i++) if (getVar(i) != BinFunction.DC) return false; // Unused variable > width is not don't care
+  //for (int i = width; i < cube.length*32; i++) if (getVar(i) != BinFunction.DC) return false; // Unused variable > width is not don't care
   return true;
  }
 }
