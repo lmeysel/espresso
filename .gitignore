@@ -9,3 +9,4 @@
 /documentation/report/*.log
 /documentation/report/*.out
 **/~*
+src/blif/BLIF.java
