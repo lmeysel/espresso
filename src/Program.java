@@ -1,5 +1,4 @@
 
-
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,35 +27,39 @@ public class Program {
 		setUpLogger();
 		Espresso esp = new Espresso();
 		// specify operation modi
-		/*esp.markEssentials = false;
-		esp.searchForBestExpansion = true;
-		esp.randomizedReduction = false;
-		esp.expansionSearchLimit = 65535;*/
+		/*
+		 * esp.markEssentials = false; esp.searchForBestExpansion = true; esp.randomizedReduction =
+		 * false; esp.expansionSearchLimit = 65535;
+		 */
 		// read data
 		BLIF dat = new BLIF();
-		if (args.length == 0) return;
-		if (args.length > 0) dat.addFromFile(args[0]);
+		if (args.length == 0)
+			return;
+		if (args.length > 0)
+			dat.addFromFile(args[0]);
 		// Minimize all functions
 		Iterator<Entry<String, Model>> it = dat.models().entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<String, Model> pair = it.next();
-			System.out.println(" ========== Model " + pair.getKey() + " ========== ");
+			log.info(" ========== Model " + pair.getKey() + " ========== ");
 			for (int i = 0; i < pair.getValue().functions().size(); i++) {
 				BinFunction in = pair.getValue().functions().get(i);
 				BinFunction out = esp.run(in);
 				pair.getValue().functions().set(i, out);
-				System.out.println("in:          " + in.toString());
-				System.out.println("minimized:   " + out.toString());
-				System.out.println("Result is valid: "+out.isEquivalent(in)+"   shrinked "+in.cost()+" literals --> "+out.cost()+" literals");
+				log.info("in:          " + in.toString());
+				log.info("minimized:   " + out.toString());
+				log.info("Result is valid: " + out.isEquivalent(in) + "   shrinked " + in.cost() + " literals --> " + out.cost() + " literals");
 			}
 		}
 		// Save data
+		String dst = null;
 		if (args.length < 2) {
-		 System.out.println("No save-directory specified!");
-		 return;
-		}
-		System.out.println("Save output to "+args[1]);
-		dat.saveToFolder(args[1]);
+			log.warning("No save-directory specified, falling back to './output'.");
+			dst = "./output/";
+		} else
+			dst = args[1];
+		System.out.println("Save output to " + dst);
+		dat.saveToFolder(dst);
 	}
 
 	/**
