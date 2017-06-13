@@ -28,12 +28,13 @@ public class Program {
 		setUpLogger();
 		Espresso esp = new Espresso();
 		// specify operation modi
-		esp.markEssentials = false;
+		/*esp.markEssentials = false;
 		esp.searchForBestExpansion = true;
 		esp.randomizedReduction = false;
-		esp.expansionSearchLimit = 65535;
+		esp.expansionSearchLimit = 65535;*/
 		// read data
 		BLIF dat = new BLIF();
+		if (args.length == 0) return;
 		if (args.length > 0) dat.addFromFile(args[0]);
 		// Minimize all functions
 		Iterator<Entry<String, Model>> it = dat.models().entrySet().iterator();
@@ -43,11 +44,19 @@ public class Program {
 			for (int i = 0; i < pair.getValue().functions().size(); i++) {
 				BinFunction in = pair.getValue().functions().get(i);
 				BinFunction out = esp.run(in);
+				pair.getValue().functions().set(i, out);
 				System.out.println("in:          " + in.toString());
 				System.out.println("minimized:   " + out.toString());
-				System.out.println("Result is valid? (Ludwig: Search for this println ;-)");
+				System.out.println("Result is valid: "+out.isEquivalent(in)+"   shrinked "+in.cost()+" literals --> "+out.cost()+" literals");
 			}
 		}
+		// Save data
+		if (args.length < 2) {
+		 System.out.println("No save-directory specified!");
+		 return;
+		}
+		System.out.println("Save output to "+args[1]);
+		dat.saveToFolder(args[1]);
 	}
 
 	/**

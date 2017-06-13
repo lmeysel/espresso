@@ -7,4 +7,5 @@
 /documentation/report/*.toc
 /documentation/report/*.sav
 /documentation/report/*.log
+/documentation/report/*.out
 **/~*

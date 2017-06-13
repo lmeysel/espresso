@@ -81,41 +81,25 @@ public class BinFunction {
  }
  
  @Override
- public String toString () { return toString(on); }
- public String toString (Set set) {
-  String s = "";
-  boolean inv = false;
-  boolean one = false;
-  String v;
-  for (int i = 0; i < set.size(); i++) {
-   if (!s.equals("")) s += " + ";
-   int dcCnt = 0;
-   for (int j = 0; j < numInputs(); j++) {
-    if (names[j] != null) v = names[j];
-    else v = ""+j;
-    switch (((Cube)set.get(i)).getVar(j)) {
-     case INV :
-      s += v+"!";
-      inv = true;
-      break;
-     case ONE :
-      s += v+" ";
-      break;
-     case ZERO :
-      s += v+"'";
-      break;
-     case DC :
-      dcCnt++;
-      break;
-    }
-    if (dcCnt == numInputs()) one = true;
-   }
-  }
-  if (inv) s = "INVALID  ("+s+")";
-  else if (one) s = "ONE  ("+s+")";
-  else if (s.length() == 0) s = "ZERO";
-  if (names[numInputs()] != null) s = names[numInputs()] + " = " + s;
-  return s;
+ public String toString () { return on.toString(this.names); }
+ 
+ public String isEquivalent(BinFunction foreign) {
+  if (this.numInputs() != foreign.numInputs()) return "no (different number of inputs)";
+  boolean namesMatch = true;
+  for (int i = 0; i < this.names.length; i++) if ((this.names[i] == null) != (foreign.names[i] == null) || (this.names[i] != null) && !this.names[i].equals(foreign.names[i])) { namesMatch = false; break;}
+  Set fOnDc = new Set(foreign.on().width());
+  fOnDc.addAll(foreign.on);
+  fOnDc.addAll(foreign.dc);
+  for (int i = 0; i < this.on.size(); i++) if (!fOnDc.covers(this.on.get(i))) return "no (the "+i+"-th cube of tested function is not covered by the input function)";
+  for (int i = 0; i < foreign.on.size(); i++) if (!this.on.covers(foreign.on.get(i))) return "no (the "+i+"-th cube of input function is not covered by the tested function)";
+  if (namesMatch) return "yes";
+  return "yes (names do not match)";
+ }
+ 
+ public int cost() {
+  int r = 0;
+  for (int i = 0; i < on.size(); i++) r += on.width() - on.get(i).cardinality2();
+  return r;
  }
 
 }

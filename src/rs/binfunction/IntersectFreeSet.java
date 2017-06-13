@@ -43,13 +43,12 @@ public class IntersectFreeSet extends Set {
   * Faster Check for Coverage than with super.covers()
   */
  @Override
- public boolean covers(final Cube u) { return covers(u, 0, this.size()); }
- public boolean covers(final Cube u, int from, int to) {
+ public boolean covers(final Cube u, final Cube ignore, int from, int to, final ForeignCoverer foreignCoverer) {
   int uCard = u.cardinality2();
   boolean[] cover_cardinality = new boolean[u.width+1]; // init with false
   for (int i = from; i < to; i++) {
    Cube a = this.get(i);
-   if (a == u) continue;
+   if (a == ignore) continue;
    a = u.and(a);
    int ca = a.cardinality2();
    if (ca == -1) continue; // no intersection between this[i] and u
@@ -62,6 +61,7 @@ public class IntersectFreeSet extends Set {
     break;
    }
   }
-  return false;
+  if (foreignCoverer == null) return false;
+  else return foreignCoverer.isCovered(u);
  }
 }
