@@ -1,0 +1,6 @@
+.inputs a b c d
+.outputs r
+
+.names a b c d r
+11-- 1
+--11 1

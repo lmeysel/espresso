@@ -7,7 +7,7 @@ import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import blif.*;
+import rs.blif.*;
 import rs.binfunction.BinFunction;
 import rs.espresso.Espresso;
 
@@ -24,7 +24,7 @@ public class Program {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		setUpLogger();
+	    setUpLogger();
 		Espresso esp = new Espresso();
 		// read data
 		BLIF dat = new BLIF();
@@ -37,11 +37,12 @@ public class Program {
 		while (it.hasNext()) {
 			Map.Entry<String, Model> pair = it.next();
 			log.info(" ========== Model " + pair.getKey() + " ========== ");
-			for (int i = 0; i < pair.getValue().functions().size(); i++) {
-				BinFunction in = pair.getValue().functions().get(i);
+			for (int i = 0; i < pair.getValue().functions.size(); i++) {
+				BinFunction in = pair.getValue().functions.get(i);
 				BinFunction out = esp.run(in);
-				pair.getValue().functions().set(i, out);
+				pair.getValue().functions.set(i, out);
 				log.info("in:          " + in.toString());
+				log.info("complement:    " + in.computeOff().toString(in.names()));
 				log.info("minimized:   " + out.toString());
 				log.info("Result is valid: " + out.isEquivalent(in) + "   shrinked " + in.cost() + " literals --> " + out.cost() + " literals");
 			}

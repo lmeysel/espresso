@@ -17,8 +17,9 @@ import rs.binfunction.Set;
  * @version 9.6.2017
  */
 public class Espresso {
- private Set onDc = null; // TODO: Check, how much faster the cover-check with the IntersectFreeSet is, compared to the Presto-Approach
- private int onCnt;
+ private Set onDc = null; // contains the on-set + the dc-set, if useOffset is false, contains the dc-set only, if useOffset is true
+ private int onCnt; // stores the number of on-set cubes in onDc
+ private IntersectFreeSet off = null;
  private final Logger log = Logger.getLogger("espresso");;
  private ExtendedSet Rp = null;
  private BinFunction fkt;
@@ -29,6 +30,7 @@ public class Espresso {
  public int expansionSearchLimit = 24; // When searching for the best expansion, paths, that are not in the best [expansionSearchLimit]-part of the list, are not longer regarded.
  public boolean useIntersectFreeSet = true; // Create the onDc as intersect-free-set
  public boolean logAllActions = false;
+ public boolean useOffset = true;
  
  public Espresso() { }
     
@@ -46,12 +48,22 @@ public class Espresso {
   if (useIntersectFreeSet) onDc = new IntersectFreeSet(fkt.numInputs());
   else onDc = new Set(fkt.numInputs());
   Rp = new ExtendedSet(fkt.numInputs());
-  for (int i = 0; i < fkt.on().size(); i++) {
-   onDc.add(fkt.on().get(i).clone());
-   Rp.add(fkt.on().get(i).clone(ExtCube.class));
+  for (int i = 0; i < fkt.on().size(); i++) Rp.add(fkt.on().get(i).clone(ExtCube.class));
+
+  
+  if (useOffset) {
+   log.info("Compute off-set...");
+   off = fkt.computeOff();
+   if (logAllActions) log.info("Complement: "+off.toString(fkt.names()));
+  } else {
+   log.info("Add on-set to onDc..."); // only necessary, if not using off-set
+   for (int i = 0; i < fkt.on().size(); i++) onDc.add(fkt.on().get(i).clone());
   }
+  log.info("Add dc-set to onDc...");
   onCnt = onDc.size();
   for (int i = 0; i < fkt.dc().size(); i++) onDc.add(fkt.dc().get(i).clone());
+  
+  if (logAllActions) log.info("Start with Rp: "+Rp.toString(fkt.names()));
   
   log.info("Expand Rp...");
   expand();
@@ -84,6 +96,7 @@ public class Espresso {
   onDc = null;
   Rp.clear();
   Rp = null;
+  off = null;
   this.fkt = null;
   return minimized;
  }
@@ -113,14 +126,14 @@ public class Espresso {
     c.andVar(j,  BinFunction.ONE);
     boolean oneUnneccessary = Rp.covers(c, c, new Set.ForeignCoverer() {
      @Override public boolean isCovered (Cube c) {
-      return onDc.covers(c, onCnt, onDc.size());
+      return onDc.covers(c, onCnt, onDc.size()); // check, if the dc-set covers c
      }
     });
     // check if the zero-half can be reduced
     c.setVar(j, BinFunction.ZERO);
     boolean zeroUnneccessary = Rp.covers(c, c, new Set.ForeignCoverer() {
      @Override public boolean isCovered (Cube c) {
-      return onDc.covers(c, onCnt, onDc.size());
+      return onDc.covers(c, onCnt, onDc.size()); // check, if the dc-set covers c
      }
     });
     // apply/keep possible reductions
@@ -135,7 +148,7 @@ public class Espresso {
   // remove covered/invalid cubes from Rp
   Rp.removeIf((Cube c) -> !c.isValid());
   if (logAllActions) {
-   BinFunction fkt = new BinFunction(Rp.width());
+   BinFunction fkt = new BinFunction(Rp.width(), this.fkt.names());
    fkt.on().addAll(Rp);
    log.info("Reduced: "+fkt.toString()+"     valid: "+fkt.isEquivalent(this.fkt));
   }
@@ -180,7 +193,7 @@ public class Espresso {
   // remove covered/invalid cubes from Rp
   Rp.removeIf((Cube c) -> !c.isValid());
   if (logAllActions) {
-   BinFunction fkt = new BinFunction(Rp.width());
+   BinFunction fkt = new BinFunction(Rp.width(), this.fkt.names());
    fkt.on().addAll(Rp);
    log.info("Expanded: "+fkt.toString()+"     valid: "+fkt.isEquivalent(this.fkt));
   }
@@ -244,7 +257,7 @@ public class Espresso {
     int oldV = c.getVar(i);
     if (oldV == BinFunction.DC) continue; // this literal is already don't care, cannot be expanded
     c.orVar(i, BinFunction.DC); // expand c for expand-test before clone
-    if (onDc.covers(c)) {
+    if (useOffset && !off.intersects(c) || !useOffset && onDc.covers(c)) {
      ExtCube e = (ExtCube)c.clone();
      c.andVar(i,  oldV); // leave c unchanged!
      // compute coverCnt of the expanded cube
@@ -291,7 +304,7 @@ public class Espresso {
    int oldV = r.getVar(i);
    if (oldV == BinFunction.DC) continue;
    r.orVar(i, BinFunction.DC);
-   if (!onDc.covers(r)) r.andVar(i, oldV);
+   if (useOffset && off.intersects(c) || !useOffset && !onDc.covers(c)) r.andVar(i, oldV);
   }
   return r;
  }

@@ -9,6 +9,7 @@ public class BinFunction {
  private final Set dc;    public Set dc () { return this.dc; }
  public int numInputs () { return this.on.width(); }
  private String[] names;    public String[] names () { return this.names; }
+ public String name () { return this.names[this.names.length-1]; }
  // definition of two-bit representations
  public final static int INV = 0;
  public final static int ONE = 2;
@@ -20,17 +21,69 @@ public class BinFunction {
  public BinFunction (int numInputs) {
   this.on = new Set(numInputs);
   this.dc = new Set(numInputs);
-  names = new String[numInputs+1]; 
+  this.names = new String[numInputs+1]; 
+ }
+ public BinFunction (int numInputs, String[] names) {
+  this(numInputs);
+  this.names = names; 
  }
  
  /**
-  * Complementation: Computes the off-set from on-set and dc-set (Extremely slow)
+  * Computes the off-set of this function by applying the Presto-Algorithm on the function.
+  * @return
+  * the off-set, which is not (highly) optimized but intersect-free.
+  */
+ public IntersectFreeSet computeOff () {
+  IntersectFreeSet off = new IntersectFreeSet(numInputs());
+  Cube c = new Cube(numInputs()); // initialized with DCs
+  addToOffset(off, c);
+  return off;
+ }
+ private void addToOffset(IntersectFreeSet off, Cube c) {
+  // regard on-set
+  for (int i = 0; i < this.on.size(); i++) {
+   Cube a = c.and(this.on.get(i));
+   if (!a.isValid()) continue; // c has no intersection with on[i]
+   if (a.equals(c)) return; // c is completely covered by one existing on[i]
+   for (int j = 0; j < c.width; j++) if (c.getVar(j) == BinFunction.DC && a.getVar(j) != BinFunction.DC) {
+    // split into smaller cubes and try again...
+    Cube c1 = c.clone();
+    Cube c2 = c.clone();
+    c1.setVar(j, BinFunction.ONE);
+    c2.setVar(j, BinFunction.ZERO);
+    addToOffset(off, c1);
+    addToOffset(off, c2);
+    return;
+   }
+  }
+  // regard dc-set
+  for (int i = 0; i < this.dc.size(); i++) {
+   Cube a = c.and(this.dc.get(i));
+   if (!a.isValid()) continue; // c has no intersection with dc[i]
+   if (a.equals(c)) return; // c is completely covered by one existing dc[i]
+   for (int j = 0; j < c.width; j++) if (c.getVar(j) == BinFunction.DC && a.getVar(j) != BinFunction.DC) {
+    // split into smaller cubes and try again...
+    Cube c1 = c.clone();
+    Cube c2 = c.clone();
+    c1.setVar(j, BinFunction.ONE);
+    c2.setVar(j, BinFunction.ZERO);
+    addToOffset(off, c1);
+    addToOffset(off, c2);
+    return;
+   }
+  }
+  // c has no intersects with on- or dc-set
+  off.forceAdd(c); // after the this algorithm, off will automatically be intersect-free (no further check required)
+ }
+ 
+ /**
+  * Complementation: Computes the off-set from on-set and dc-set by applying DeMorgan's law (Extremely slow)
   * @return
   * The off-set
   * @throws Exception
   * Fails, if there are invalid cubes in the function.
   */
- public Set computeOff () throws Exception {
+ public Set computeOff_deMorgan () throws Exception {
   Set onDc = new Set(numInputs()); // onDc contains all implicants that are not in the offset. So not onDC is the offset, which has to be expanded to get a disjunctive form
   onDc.addAll(this.on);
   onDc.addAll(this.dc);
@@ -82,7 +135,9 @@ public class BinFunction {
  
  @Override
  public String toString () {
-  String r = on.toString(this.names);
+  String r = "";
+  if (on.intersects(dc)) r += "[on and dc intersect!]";
+  r += on.toString(this.names);
   if (dc.size() > 0) r += "     DC_"+dc.toString(this.names);
   return r;
  }

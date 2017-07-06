@@ -24,6 +24,16 @@ public class Set extends ArrayList<Cube> {
   return super.add(c);
  }
  
+ public boolean intersects (Cube c) {
+  for (int i = 0; i < this.size(); i++) if (this.get(i).and(c).isValid()) return true;
+  return false;
+ }
+ 
+ public boolean intersects (Set s) {
+  for (int i = 0; i < s.size(); i++) if (this.intersects(s.get(i))) return true;
+  return false;
+ }
+ 
  /**
   * Checks, weather the given cube u is completely covered by this set.
   * If u is element of this, the function checks, weather u is covered by this without u
@@ -36,24 +46,31 @@ public class Set extends ArrayList<Cube> {
  public boolean covers(final Cube u, final Cube ignore, final ForeignCoverer foreignCoverer) { return covers(u, ignore, 0, this.size(), foreignCoverer); }
  public boolean covers(final Cube u, final Cube ignore, int from, int to, final ForeignCoverer foreignCoverer) {
   int i = 0;
-  for (i = from; i < to; i++) {
+  int intersectVar = -1;
+  CUBEITERATOR: for (i = from; i < to; i++) {
    Cube a = this.get(i);
-   if (a == ignore) continue; // this without u
+   if (a == ignore) continue; // this \ ignore
    a = u.and(a);
-   if (!a.isValid()) continue; // u has no intersection with cube[i]
-   if (a.equals(u)) return true; // u is completely covered by the existing cube[i]
-   for (int j = 0; j < u.width; j++) if (u.getVar(j) == BinFunction.DC && a.getVar(j) != BinFunction.DC) {
-    // split into smaller cubes and try again...
-    Cube c1 = u.clone();
-    Cube c2 = u.clone();
-    c1.setVar(j, BinFunction.ONE);
-    c2.setVar(j, BinFunction.ZERO);
-    return covers(c1, ignore, from, to, foreignCoverer) && covers(c2, ignore, from, to, foreignCoverer);
+   boolean covered = true;
+   for (int j = 0; j < u.width; j++) {
+    int v = a.getVar(j);
+    if (v == BinFunction.INV) continue CUBEITERATOR; // u has no intersection with cube[i]
+    if (u.getVar(j) == BinFunction.DC && v != BinFunction.DC) { covered = false; intersectVar = j; } // u has partial intersection with cube[i]
    }
+   if (covered) return true; // u is completely covered by cube[i]
   }
-  // u has no intersects with existing cubes
-  if (foreignCoverer == null) return false;
-  else return foreignCoverer.isCovered(u);
+  if (intersectVar == -1) {
+   // u has no intersects with existing cubes
+   if (foreignCoverer == null) return false;
+   else return foreignCoverer.isCovered(u);
+  } else {
+   // split into smaller cubes and try again...
+   Cube c1 = u.clone();
+   Cube c2 = u.clone();
+   c1.setVar(intersectVar, BinFunction.ONE);
+   c2.setVar(intersectVar, BinFunction.ZERO);
+   return covers(c1, ignore, from, to, foreignCoverer) && covers(c2, ignore, from, to, foreignCoverer);
+  }
  }
  
  @Override

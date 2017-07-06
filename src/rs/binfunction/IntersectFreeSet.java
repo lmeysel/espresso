@@ -39,6 +39,10 @@ public class IntersectFreeSet extends Set {
   return true;
  }
  
+ void forceAdd(final Cube c) {
+  super.add(c);
+ }
+ 
  /**
   * Faster Check for Coverage than with super.covers()
   */

@@ -10,7 +10,7 @@ import java.util.Arrays;
  *
  */
 public class Cube {
- protected static final long TOTAL_INVALID = Long.parseUnsignedLong("FFFFFFFFFFFFFFFF", 16);
+ protected static final long TOTAL_DC = Long.parseUnsignedLong("FFFFFFFFFFFFFFFF", 16);
  public final int width;
  protected final long[] cube;
  private int card = -1;
@@ -18,7 +18,7 @@ public class Cube {
  public Cube(int width) {
   this.width = width;
   cube = new long[(int)Math.ceil((width) / 32.0)];
-  Arrays.fill(cube, TOTAL_INVALID);
+  Arrays.fill(cube, TOTAL_DC);
  }
 
  public Cube (String s) throws Exception {
@@ -160,5 +160,22 @@ public class Cube {
   // TODO: Time critical function! Don't check each literal separately but continuously shift each long or try mask operations
   for (int i = 0; i < width; i++) if (getVar(i) == BinFunction.INV) return false; // One variable is invalid
   return true;
+ }
+ 
+ @Override
+ public String toString () {
+  String s = "";
+  for (int i = 0; i < this.width; i++) switch (this.getVar(i)) {
+   case BinFunction.INV :
+    s += i+"!";
+    break;
+   case BinFunction.ZERO :
+    s += i+"'";
+    break;
+   case BinFunction.ONE :
+    s += i+" ";
+    break;
+  }
+  return s;
  }
 }
